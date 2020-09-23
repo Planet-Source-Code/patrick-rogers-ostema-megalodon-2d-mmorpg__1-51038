@@ -1,0 +1,231 @@
+VERSION 5.00
+Begin VB.Form ScriptForm 
+   BorderStyle     =   1  'Fixed Single
+   Caption         =   "MMORPG Script Editor by Patrick Rogers-Ostema"
+   ClientHeight    =   5700
+   ClientLeft      =   150
+   ClientTop       =   720
+   ClientWidth     =   7815
+   LinkTopic       =   "Form1"
+   MaxButton       =   0   'False
+   MinButton       =   0   'False
+   ScaleHeight     =   5700
+   ScaleWidth      =   7815
+   StartUpPosition =   3  'Windows Default
+   Begin VB.CheckBox Check1 
+      Caption         =   "Display tokens while compiling"
+      Height          =   615
+      Left            =   6600
+      TabIndex        =   3
+      TabStop         =   0   'False
+      Top             =   1320
+      Width           =   1215
+   End
+   Begin VB.CommandButton Command1 
+      Caption         =   "Compile"
+      Height          =   495
+      Left            =   6600
+      TabIndex        =   2
+      TabStop         =   0   'False
+      Top             =   120
+      Width           =   1215
+   End
+   Begin VB.TextBox OutBox 
+      Height          =   2055
+      Left            =   120
+      MultiLine       =   -1  'True
+      ScrollBars      =   2  'Vertical
+      TabIndex        =   1
+      TabStop         =   0   'False
+      Top             =   3480
+      Width           =   6375
+   End
+   Begin VB.TextBox CodeBox 
+      Height          =   3255
+      Left            =   120
+      MultiLine       =   -1  'True
+      ScrollBars      =   2  'Vertical
+      TabIndex        =   0
+      Top             =   120
+      Width           =   6375
+   End
+   Begin VB.Menu mnuFile 
+      Caption         =   "File"
+      Begin VB.Menu mnuFileOpen 
+         Caption         =   "Open Script Components"
+      End
+      Begin VB.Menu mnuFileSave 
+         Caption         =   "Save Script Components"
+      End
+      Begin VB.Menu mnuFileOpenSource 
+         Caption         =   "Open Script Source"
+      End
+      Begin VB.Menu mnuFileSaveSource 
+         Caption         =   "Save Script Source"
+      End
+   End
+End
+Attribute VB_Name = "ScriptForm"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+'Megalodon Entertainment http://home.kc.rr.com/megalodonsoft
+'Created by Patrick Rogers-Ostema
+Private Declare Function GetSaveFileName Lib "comdlg32.dll" Alias "GetSaveFileNameA" (lpOpenFilename As OPENFILENAME) As Long
+Private Declare Function GetOpenFileName Lib "comdlg32.dll" Alias "GetOpenFileNameA" (lpOpenFilename As OPENFILENAME) As Long
+Private Type OPENFILENAME
+    lStructSize As Long
+    hwndOwner As Long
+    hInstance As Long
+    lpstrFilter As String
+    lpstrCustomFilter As String
+    nMaxCustFilter As String
+    nFilterIndex As Long
+    lpstrFile As String
+    nMaxFile As LoadPictureColorConstants
+    lpstrFileTitle As String
+    nMaxFileTitle As Long
+    lpstrInitialDir As String
+    lpstrTitle As String
+    flags As Long
+    nFileOffset As Integer
+    nFileExtension As Integer
+    lpstrDefExt As String
+    lCustData As Long
+    lpfnHook As Long
+    lpTemplateName As String
+End Type
+Dim CurSave As String
+Public ScriptCode As String
+
+Private Sub Command1_Click()
+Dim Code As String
+Code = CodeBox.Text
+ScriptMod.CleanCode Code
+End Sub
+Private Sub mnuFileOpen_Click()
+Dim rc As Long
+Dim pOpenfilename As OPENFILENAME
+Dim strMapName As String
+Dim intFreeFile As Integer
+Const MAX_BUFFER_LENGTH = 256
+With pOpenfilename
+    .hwndOwner = ScriptForm.hWnd
+    .hInstance = App.hInstance
+    .lpstrTitle = "Open Script Files"
+    .lpstrInitialDir = App.Path
+    .lpstrFilter = "Script Files" & Chr$(0) & "*.rsb*" & Chr$(0)
+    .nFilterIndex = 1
+    .lpstrDefExt = "rsb"
+    .lpstrFile = String(MAX_BUFFER_LENGTH, 0)
+    .nMaxFile = MAX_BUFFER_LENGTH - 1
+    .lpstrFileTitle = .lpstrFile
+    .nMaxFileTitle = MAX_BUFFER_LENGTH
+    .lStructSize = Len(pOpenfilename)
+End With
+rc = GetOpenFileName(pOpenfilename)
+If rc Then
+    strMapName = Left$(pOpenfilename.lpstrFile, pOpenfilename.nMaxFile)
+    CurSave = strMapName
+    intFreeFile = FreeFile
+    ScriptForm.CodeBox.Text = ""
+    ScriptMod.OpenTokens strMapName, intFreeFile, True
+End If
+End Sub
+
+Private Sub mnuFileOpenSource_Click()
+Dim rc As Long
+Dim pOpenfilename As OPENFILENAME
+Dim strMapName As String
+Dim intFreeFile As Integer
+Const MAX_BUFFER_LENGTH = 256
+With pOpenfilename
+    .hwndOwner = ScriptForm.hWnd
+    .hInstance = App.hInstance
+    .lpstrTitle = "Open Script Source"
+    .lpstrInitialDir = App.Path
+    .lpstrFilter = "Script Source" & Chr$(0) & "*.rss*" & Chr$(0)
+    .nFilterIndex = 1
+    .lpstrDefExt = "rss"
+    .lpstrFile = String(MAX_BUFFER_LENGTH, 0)
+    .nMaxFile = MAX_BUFFER_LENGTH - 1
+    .lpstrFileTitle = .lpstrFile
+    .nMaxFileTitle = MAX_BUFFER_LENGTH
+    .lStructSize = Len(pOpenfilename)
+End With
+rc = GetOpenFileName(pOpenfilename)
+If rc Then
+    strMapName = Left$(pOpenfilename.lpstrFile, pOpenfilename.nMaxFile)
+    CurSave = strMapName
+    intFreeFile = FreeFile
+    ScriptForm.CodeBox.Text = ""
+    ScriptMod.OpenTokens strMapName, intFreeFile, False
+End If
+End Sub
+
+Private Sub mnuFileSave_Click()
+Dim rc As Long
+Dim pOpenfilename As OPENFILENAME
+Dim intFreeFile As Integer
+Dim strMapName As String
+Const MAX_BUFFER_LENGTH = 256
+With pOpenfilename
+    .hwndOwner = ScriptForm.hWnd
+    .hInstance = App.hInstance
+    .lpstrTitle = "Save As"
+    .lpstrInitialDir = App.Path
+    .lpstrFilter = "Script Files" & Chr$(0) & "*.rsb*" & Chr$(0)
+    .nFilterIndex = 1
+    .lpstrDefExt = "rsb"
+    .lpstrFile = String(MAX_BUFFER_LENGTH, 0)
+    .nMaxFile = MAX_BUFFER_LENGTH - 1
+    .lpstrFileTitle = .lpstrFile
+    .nMaxFileTitle = MAX_BUFFER_LENGTH
+    .lStructSize = Len(pOpenfilename)
+End With
+rc = GetSaveFileName(pOpenfilename)
+If rc Then
+    strMapName = Left$(pOpenfilename.lpstrFile, pOpenfilename.nMaxFile)
+    CurSave = strMapName
+    intFreeFile = FreeFile
+    ScriptCode = ScriptForm.CodeBox.Text
+    ScriptMod.SaveTokens strMapName, intFreeFile, True
+    MsgBox "Script Saved!", vbOKOnly
+End If
+End Sub
+
+Private Sub mnuFileSaveSource_Click()
+Dim rc As Long
+Dim pOpenfilename As OPENFILENAME
+Dim intFreeFile As Integer
+Dim strMapName As String
+Const MAX_BUFFER_LENGTH = 256
+With pOpenfilename
+    .hwndOwner = ScriptForm.hWnd
+    .hInstance = App.hInstance
+    .lpstrTitle = "Save As"
+    .lpstrInitialDir = App.Path
+    .lpstrFilter = "Script Source" & Chr$(0) & "*.rss*" & Chr$(0)
+    .nFilterIndex = 1
+    .lpstrDefExt = "rss"
+    .lpstrFile = String(MAX_BUFFER_LENGTH, 0)
+    .nMaxFile = MAX_BUFFER_LENGTH - 1
+    .lpstrFileTitle = .lpstrFile
+    .nMaxFileTitle = MAX_BUFFER_LENGTH
+    .lStructSize = Len(pOpenfilename)
+End With
+rc = GetSaveFileName(pOpenfilename)
+If rc Then
+    strMapName = Left$(pOpenfilename.lpstrFile, pOpenfilename.nMaxFile)
+    CurSave = strMapName
+    intFreeFile = FreeFile
+    ScriptCode = ScriptForm.CodeBox.Text
+    ScriptMod.SaveTokens strMapName, intFreeFile, False
+    MsgBox "Script Saved!", vbOKOnly
+End If
+End Sub
+
+Private Sub OutBox_Change()
+OutBox.SelStart = Len(OutBox.Text)
+End Sub
